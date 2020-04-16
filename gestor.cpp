@@ -268,13 +268,9 @@ void Gestor::modificar()
     fstream archivoDatos;
     fstream archivoTmp;
     string aux;
-    bool found;
     char opc;
     int res;
     long mod;
-    long pos;
-    long posMod;
-    long largMod;
 
     mostrar();    
     if (m_indices.size()){
@@ -296,27 +292,43 @@ void Gestor::modificar()
                      << "Opción: ";
                 cin >> opc;
             }while(opc < OPC_CAMPO_NOM || opc > OPC_CAMPO_CANCELAR);
-            
             if (opc != OPC_CAMPO_CANCELAR){
                 m_posFinal = 0;
                 archivoTmp.open("usuarios.tmp", ios::out);
                 archivoDatos.open("usuarios.txt", ios::in | ios::binary);
                 while (!archivoDatos.eof()){
-                    pos = archivoTmp.tellg();
+                    getline(archivoDatos, aux, '|');
                     if (archivoDatos.eof())
                         break;
 
                     res = busqueda_binaria(m_pares, aux);
-                    *m_pares[res].value = pos;
+                    if (res != -1)
+                        *m_pares[res].value = archivoTmp.tellp();
 
                     if (aux != *m_pares[mod - 1].key){
-                        getline(archivoDatos, aux, '|');
                         archivoTmp << aux << '|';
                         getline(archivoDatos, aux);
                         archivoTmp << aux << '\n';
                     }
                     else{
-                        leer_archivo_datos(usuarioTmp, &pos);
+                        usuarioTmp.setCodigo(aux);
+                        getline(archivoDatos, aux, '|');
+                        usuarioTmp.setNombre(aux);
+                        getline(archivoDatos, aux, '|');
+                        usuarioTmp.setApellido(aux);
+                        getline(archivoDatos, aux, '|');
+                        usuarioTmp.setEdad(stoi(aux));
+                        getline(archivoDatos, aux, '|');
+                        usuarioTmp.setGenero(aux[0]);
+                        getline(archivoDatos, aux, '|');
+                        usuarioTmp.setPeso(stof(aux));
+                        getline(archivoDatos, aux, '|');
+                        usuarioTmp.setMasaCorporal(stof(aux));
+                        getline(archivoDatos, aux, '|');
+                        usuarioTmp.setTipoSangre(aux);
+                        getline(archivoDatos, aux);
+                        usuarioTmp.setAltura(stof(aux));
+
                         modificar_datos(usuarioTmp, opc);
                         archivoTmp << usuarioTmp.getCodigo()       << '|'
                                    << usuarioTmp.getNombre()       << '|'
@@ -329,6 +341,7 @@ void Gestor::modificar()
                                    << usuarioTmp.getAltura()       << '\n';
                     }
                 }
+                m_posFinal = archivoTmp.tellp();
                 archivoTmp.close();
                 archivoDatos.close();
                 remove("usuarios.txt");
