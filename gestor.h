@@ -16,30 +16,33 @@
 #include <string>
 #include <cstring>
 #include "usuario.h"
+#include "hash_map.h"
 using namespace std;
+
+class Indice
+{
+public:
+    bool operator<(const Indice &other);
+    bool operator>(const Indice &other);
+    bool operator==(const Indice &other);
+    void operator=(const Indice &other);
+    bool operator<(const string &other);
+    bool operator>(const string &other);
+    bool operator==(const string &other);
+
+private:
+    // Atributos
+    char codigo[9];
+    long referencia;
+    Indice() {}
+    Indice(const char *cod, long ref);
+    ~Indice();
+    friend class Gestor;
+};
 
 class Gestor
 {
 public:
-    struct Indice
-    {
-        Indice() {}
-        Indice(const char *cod, long ref);
-        ~Indice();
-
-        bool operator<(const Indice &other);
-        bool operator>(const Indice &other);
-        bool operator==(const Indice &other);
-        void operator=(const Indice &other);
-        bool operator<(const string &other);
-        bool operator>(const string &other);
-        bool operator==(const string &other);
-
-        // Atributos
-        char codigo[9];
-        long referencia;
-    };
-
     Gestor();
     ~Gestor();
 
@@ -52,12 +55,13 @@ public:
     void capturar_datos(Usuario& usuario);
     bool codigo_usado(const string codigo);
     void modificar_datos(Usuario& usuario, char i);
-    int busqueda_binaria(vector<Gestor::Indice> &vec, string dato);
     void actualizar_indices();
-    void leer_archivo_datos(Usuario& usuario, long pos = -1);
-
+    void leer_archivo_datos(Usuario &usuario, long *indice = nullptr);
+    int busqueda_binaria(vector<HashMap<string, long>::Pair> &vec, string dato);
+    void actualizar_pares();
 private:
-    vector<Gestor::Indice> m_indices;
+    vector<HashMap<string, long>::Pair> m_pares;
+    HashMap<string, long> m_indices;
     long m_posFinal;
 
     /// EXPRESIONES REGULARES ///
