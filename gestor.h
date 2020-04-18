@@ -58,9 +58,7 @@ public:
     void actualizar_indices();
     void leer_archivo_datos(Usuario &usuario, long *indice = nullptr);
     int busqueda_binaria(vector<HashMap<string, long>::Pair> &vec, string dato);
-    void actualizar_pares();
 private:
-    vector<HashMap<string, long>::Pair> m_pares;
     HashMap<string, long> m_indices;
     long m_posFinal;
 

@@ -71,8 +71,7 @@ void Gestor::menu()
     char opc;
     do{
         CLEAR;
-        cout << m_posFinal << endl
-             << " Ingrese la opción a ejecutar: " << endl
+        cout << " Ingrese la opción a ejecutar: " << endl
              << " " << char(OPC_CAPTURAR) << ") Capturar usuario" << endl
              << " " << char(OPC_MOSTRAR) << ") Mostrar usuarios" << endl
              << " " << char(OPC_BUSCAR) << ") Buscar usuario (por código)" << endl
@@ -112,7 +111,6 @@ void Gestor::menu()
 
             case OPC_SALIR:
                 cout << " Hasta la próxima" << endl;
-                actualizar_indices();
             return;
 
             default:
@@ -129,7 +127,6 @@ void Gestor::buscar()
     Usuario usuarioTmp;
     HashMap<string, long>::Pair par;
     long *res;
-    long pos;
 
     if (!m_indices.size())
         cout << " Aún no se han ingresado usuarios " << endl << endl
@@ -141,12 +138,9 @@ void Gestor::buscar()
         if (res == nullptr)
             cout << " Código no encontrado, presione ENTER para continuar..." << endl;
         else{
-            actualizar_pares();
-            pos = busqueda_binaria(m_pares, codigo);
             leer_archivo_datos(usuarioTmp, res);
             //CLEAR;
             cout << endl
-                 << " Usuario #" << pos + 1 << endl
                  << " Código: " << usuarioTmp.getCodigo() << endl
                  << " Nombre: " << usuarioTmp.getNombre() << endl
                  << " Apellido: " << usuarioTmp.getApellido() << endl
@@ -173,15 +167,13 @@ void Gestor::capturar(const Usuario& usuario)
         return;
     }
     m_indices.insert(usuario.getCodigo(), m_posFinal);
-    archivoDatos << usuario.getCodigo() << '|' << usuario.getNombre() << '|'
+    archivoDatos << usuario.getCodigo()   << '|' << usuario.getNombre() << '|'
                  << usuario.getApellido() << '|' << usuario.getEdad() << '|'
-                 << usuario.getGenero() << '|' << usuario.getPeso() << '|'
+                 << usuario.getGenero()   << '|' << usuario.getPeso() << '|'
                  << usuario.getMasaCorporal() << '|' << usuario.getTipoSangre() << '|'
-                 << usuario.getAltura() << endl;
+                 << usuario.getAltura()   << endl;
     m_posFinal = archivoDatos.tellg();
     archivoDatos.close();
-    for (size_t i = 0; i < m_indices.size(); ++i)
-        cout << *m_indices.get_position(i).key << " | " << *m_indices.get_position(i).value << endl;
     actualizar_indices();
     cout << endl
          << " Usuario añadido exitosamente." << endl
@@ -198,8 +190,9 @@ void Gestor::eliminar()
     fstream archivoDatos("usuarios.txt", ios::in);
     fstream archivoTmp("usuarios.tmp", ios::out);
     string aux;
-    string key;
+    string codigo;
     Usuario usuarioTmp;
+    long* value;
 
     mostrar();
     if (!m_indices.size()){
@@ -210,6 +203,8 @@ void Gestor::eliminar()
 
     cout << " Ingrese número del usuario a eliminar: ";
     cin >> elim;
+    leer_archivo_datos(usuarioTmp, m_indices.get_position(elim - 1).value);
+    codigo = usuarioTmp.getCodigo();
     if (elim <= m_indices.size() && elim){
         m_posFinal = 0;
         while (!archivoDatos.eof()){
@@ -218,12 +213,12 @@ void Gestor::eliminar()
             getline(archivoDatos, aux, '|');
             if (archivoDatos.eof())
                 break;
-            if (aux != *m_pares[elim - 1].key || found){
-                res = busqueda_binaria(m_pares, aux);
+            if (aux != codigo || found){
+                value = m_indices[aux];
                 if (!found)
-                    *m_pares[res].value = pos;
+                    *value = pos;
                 else
-                    *m_pares[res].value = pos - largElim;
+                    *value = pos - largElim;
 
                 // Se escribe el código y su separador en el tmp
                 archivoTmp << aux << '|';
@@ -233,10 +228,7 @@ void Gestor::eliminar()
             }
             else{
                 found = true;
-                key = *m_pares[elim - 1].key;
-                cout << key << endl;
-                m_pares.erase(m_pares.begin() + elim - 1);
-                m_indices.delete_value(key);
+                m_indices.delete_value(codigo);
 
                 getline(archivoDatos, aux);
                 largElim = archivoDatos.tellg();
@@ -244,10 +236,6 @@ void Gestor::eliminar()
             }
         }
         m_posFinal = pos - largElim;
-        cout << m_posFinal << " | " << largElim << endl;
-        for (size_t i = 0; i < m_indices.size(); ++i)
-            cout << *m_indices.get_position(i).key << " | " << *m_indices.get_position(i).value << endl;
-        cin.get();
         archivoDatos.close();
         archivoTmp.close();
         remove("usuarios.txt");
@@ -268,26 +256,29 @@ void Gestor::modificar()
     fstream archivoDatos;
     fstream archivoTmp;
     string aux;
+    string codigo;
     char opc;
     int res;
     long mod;
+    long* value;
 
     mostrar();    
     if (m_indices.size()){
         cout << " Ingrese número del usuario a modificar: ";
         cin >> mod;
-
+        leer_archivo_datos(usuarioTmp, m_indices.get_position(mod - 1).value);
+        codigo = usuarioTmp.getCodigo();
         if (mod <= m_indices.size() && mod){   
             do{
                 cout << endl
                      << " Seleccione el campo a modificar:" << endl
-                     << char(OPC_CAMPO_NOM) << ") Nombre" << endl
-                     << char(OPC_CAMPO_APE) << ") Apellido" << endl
+                     << char(OPC_CAMPO_NOM)  << ") Nombre" << endl
+                     << char(OPC_CAMPO_APE)  << ") Apellido" << endl
                      << char(OPC_CAMPO_EDAD) << ") Edad" << endl
                      << char(OPC_CAMPO_SEXO) << ") Sexo" << endl
                      << char(OPC_CAMPO_PESO) << ") Peso" << endl
                      << char(OPC_CAMPO_TIPO_SANGRE) << ") Tipo de sanguíneo" << endl
-                     << char(OPC_CAMPO_ALTURA) << ") Altura" << endl
+                     << char(OPC_CAMPO_ALTURA)  << ") Altura" << endl
                      << char(OPC_CAMPO_CANCELAR) << ") Cancelar" << endl
                      << "Opción: ";
                 cin >> opc;
@@ -301,11 +292,11 @@ void Gestor::modificar()
                     if (archivoDatos.eof())
                         break;
 
-                    res = busqueda_binaria(m_pares, aux);
-                    if (res != -1)
-                        *m_pares[res].value = archivoTmp.tellp();
+                    value = m_indices[aux];
+                    if (value != nullptr)
+                        *value = archivoTmp.tellp();
 
-                    if (aux != *m_pares[mod - 1].key){
+                    if (aux != codigo){
                         archivoTmp << aux << '|';
                         getline(archivoDatos, aux);
                         archivoTmp << aux << '\n';
@@ -367,14 +358,12 @@ void Gestor::mostrar()
     Usuario usuarioTmp;
     string aux;
 
-    actualizar_pares();
     if (!m_indices.size()){
         cout << " Aún no se han ingresado usuarios" << endl;
         return;
     }
-    for (size_t i = 0; i < m_pares.size(); ++i){
-        cout << *m_pares[i].value << endl;
-        leer_archivo_datos(usuarioTmp, m_pares[i].value);
+    for (size_t i = 0; i < m_indices.size(); ++i){
+        leer_archivo_datos(usuarioTmp, m_indices.get_position(i).value);
         cout << " Usuario #" << i + 1 << endl
              << " Código: " << usuarioTmp.getCodigo() << endl
              << " Nombre: " << usuarioTmp.getNombre() << endl
@@ -393,9 +382,8 @@ void Gestor::mostrar()
 
 bool Gestor::codigo_usado(const string codigo)
 {
-    for (int i = 0; i < m_indices.size(); i++)
-        if (m_indices[codigo] != nullptr)
-            return true;
+    if (m_indices[codigo] != nullptr)
+        return true;
     return false;
 }
 
@@ -690,7 +678,6 @@ void Gestor::actualizar_indices()
     HashMap<string, long>::Pair par;
     fstream archivoDatosIndices("indices.bin", ios::out | ios::binary | ios::trunc);
     
-    actualizar_pares();
     indiceTmp.referencia = m_posFinal;
     archivoDatosIndices.write((char *)&indiceTmp, sizeof(indiceTmp));
     for (size_t i = 0; i < m_indices.size(); ++i){
@@ -748,14 +735,4 @@ void Gestor::leer_archivo_datos(Usuario& usuario, long* indice)
     usuario.setAltura(stof(aux));
 
     archivo.close();
-}
-
-void Gestor::actualizar_pares()
-{
-    // Se actualiza la lista de pares
-    m_pares.clear();
-    for (size_t i = 0; i < m_indices.size(); ++i)
-        m_pares.push_back(m_indices.get_position(i));
-    sort(m_pares.begin(), m_pares.end(), [](HashMap<string, long>::Pair a, HashMap<string, long>::Pair b)
-                                            { return *a.key < *b.key; });
 }
